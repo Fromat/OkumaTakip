@@ -2,19 +2,21 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Takip Çizelgesi</title>
   <style>
     body {
       margin: 0; font-family: Arial, sans-serif; background: #0b1020; color: #e6edf3;
       display: flex; flex-direction: column; align-items: center; padding: 20px;
+      overflow-x: hidden;
     }
     h1 { margin-bottom: 5px; }
     .week-nav {
       display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: #9aa4b2;
     }
     .nav-btn {
-      background: none; border: none; color: #e6edf3; font-size: 20px; cursor: pointer;
+      background: none; border: none; color: #e6edf3; font-size: 28px; cursor: pointer; padding: 5px 10px;
+      touch-action: manipulation; /* Mobil dokunma için */
     }
     .nav-btn:disabled { opacity: 0.4; cursor: default; }
     .nav-btn:hover:not(:disabled) { color: #4f8cff; }
@@ -34,9 +36,9 @@
 <body>
   <h1 id="welcome"></h1>
   <div class="week-nav">
-    <button type="button" class="nav-btn" id="prevBtn" onclick="changeWeek(-1)">⟨</button>
+    <button type="button" class="nav-btn" id="prevBtn">⟨</button>
     <div id="weekLabel"></div>
-    <button type="button" class="nav-btn" id="nextBtn" onclick="changeWeek(1)">⟩</button>
+    <button type="button" class="nav-btn" id="nextBtn">⟩</button>
   </div>
   <table>
     <thead>
@@ -48,13 +50,13 @@
     </thead>
     <tbody id="dataBody"></tbody>
   </table>
-  <button type="button" class="logout" onclick="logout()">Çıkış Yap</button>
+  <button type="button" class="logout" id="logoutBtn">Çıkış Yap</button>
 
   <script>
     const STORAGE_KEY = "selectedName";
     const name = localStorage.getItem(STORAGE_KEY);
     if (!name) {
-      window.location.href = "index.html";
+      location.replace("index.html");
     } else {
       document.getElementById("welcome").textContent = `Hoş geldin, ${name}`;
     }
@@ -75,20 +77,10 @@
 
     let currentWeekIndex = weeks.length - 1;
 
-    // Sadece okunan sayfa sayısını tut, toplam otomatik hesaplanır
     const baseData = {
-      0: [
-        { name: "Ahmet", read: 25 },
-        { name: "Ayşe", read: 30 }
-      ],
-      1: [
-        { name: "Ahmet", read: 28 },
-        { name: "Ayşe", read: 26 }
-      ],
-      2: [
-        { name: "Ahmet", read: 22 },
-        { name: "Ayşe", read: 32 }
-      ]
+      0: [ { name: "Ahmet", read: 25 }, { name: "Ayşe", read: 30 } ],
+      1: [ { name: "Ahmet", read: 28 }, { name: "Ayşe", read: 26 } ],
+      2: [ { name: "Ahmet", read: 22 }, { name: "Ayşe", read: 32 } ]
     };
 
     function calculateTotals() {
@@ -109,11 +101,9 @@
       document.getElementById("weekLabel").textContent = `${week.start} - ${week.end} Haftası`;
 
       const tbody = document.getElementById("dataBody");
-      let rows = "";
-      (baseData[currentWeekIndex] || []).forEach(person => {
-        rows += `<tr><td>${person.name}</td><td>${person.read}</td><td>${person.total}</td></tr>`;
-      });
-      tbody.innerHTML = rows;
+      tbody.innerHTML = (baseData[currentWeekIndex] || []).map(person =>
+        `<tr><td>${person.name}</td><td>${person.read}</td><td>${person.total}</td></tr>`
+      ).join("");
 
       document.getElementById("prevBtn").disabled = currentWeekIndex === 0;
       document.getElementById("nextBtn").disabled = currentWeekIndex === weeks.length - 1 || !baseData[currentWeekIndex + 1];
@@ -126,12 +116,14 @@
       renderWeek();
     }
 
-    renderWeek();
-
-    function logout() {
+    document.getElementById("prevBtn").addEventListener("click", () => changeWeek(-1));
+    document.getElementById("nextBtn").addEventListener("click", () => changeWeek(1));
+    document.getElementById("logoutBtn").addEventListener("click", () => {
       localStorage.removeItem(STORAGE_KEY);
-      window.location.href = "index.html";
-    }
+      location.replace("index.html");
+    });
+
+    renderWeek();
   </script>
 </body>
 </html>
