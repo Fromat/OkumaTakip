@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
@@ -16,7 +16,8 @@
     .nav-btn {
       background: none; border: none; color: #e6edf3; font-size: 20px; cursor: pointer;
     }
-    .nav-btn:hover { color: #4f8cff; }
+    .nav-btn:disabled { opacity: 0.4; cursor: default; }
+    .nav-btn:hover:not(:disabled) { color: #4f8cff; }
     table {
       border-collapse: collapse; width: 100%; max-width: 700px; background: #111936; border-radius: 10px; overflow: hidden;
     }
@@ -33,9 +34,9 @@
 <body>
   <h1 id="welcome"></h1>
   <div class="week-nav">
-    <button class="nav-btn" onclick="changeWeek(-1)">⟨</button>
+    <button type="button" class="nav-btn" id="prevBtn" onclick="changeWeek(-1)">⟨</button>
     <div id="weekLabel"></div>
-    <button class="nav-btn" onclick="changeWeek(1)">⟩</button>
+    <button type="button" class="nav-btn" id="nextBtn" onclick="changeWeek(1)">⟩</button>
   </div>
   <table>
     <thead>
@@ -45,10 +46,9 @@
         <th>Toplam Sayfa Sayısı</th>
       </tr>
     </thead>
-    <tbody id="dataBody">
-    </tbody>
+    <tbody id="dataBody"></tbody>
   </table>
-  <button class="logout" onclick="logout()">Çıkış Yap</button>
+  <button type="button" class="logout" onclick="logout()">Çıkış Yap</button>
 
   <script>
     const STORAGE_KEY = "selectedName";
@@ -59,44 +59,70 @@
       document.getElementById("welcome").textContent = `Hoş geldin, ${name}`;
     }
 
-    const weeks = [
-      { start: "18 Ağu", end: "24 Ağu" },
-      { start: "25 Ağu", end: "31 Ağu" },
-      { start: "1 Eyl", end: "7 Eyl" }
-    ];
-    let currentWeekIndex = 0;
+    const today = new Date();
+    const weeks = [];
+    for (let i = -2; i <= 0; i++) {
+      const start = new Date(today);
+      start.setDate(start.getDate() + i * 7 - start.getDay() + 1);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      weeks.push({ start: formatDate(start), end: formatDate(end) });
+    }
 
-    const peopleData = {
+    function formatDate(date) {
+      return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+    }
+
+    let currentWeekIndex = weeks.length - 1;
+
+    // Sadece okunan sayfa sayısını tut, toplam otomatik hesaplanır
+    const baseData = {
       0: [
-        { name: "Ahmet", read: 25, total: 100 },
-        { name: "Ayşe", read: 30, total: 120 }
+        { name: "Ahmet", read: 25 },
+        { name: "Ayşe", read: 30 }
       ],
       1: [
-        { name: "Ahmet", read: 28, total: 128 },
-        { name: "Ayşe", read: 26, total: 146 }
+        { name: "Ahmet", read: 28 },
+        { name: "Ayşe", read: 26 }
       ],
       2: [
-        { name: "Ahmet", read: 22, total: 150 },
-        { name: "Ayşe", read: 32, total: 178 }
+        { name: "Ahmet", read: 22 },
+        { name: "Ayşe", read: 32 }
       ]
     };
+
+    function calculateTotals() {
+      const totals = {};
+      Object.keys(baseData).forEach(weekIndex => {
+        baseData[weekIndex].forEach(person => {
+          if (!totals[person.name]) totals[person.name] = 0;
+          totals[person.name] += person.read;
+          person.total = totals[person.name];
+        });
+      });
+    }
+
+    calculateTotals();
 
     function renderWeek() {
       const week = weeks[currentWeekIndex];
       document.getElementById("weekLabel").textContent = `${week.start} - ${week.end} Haftası`;
 
       const tbody = document.getElementById("dataBody");
-      tbody.innerHTML = "";
-      (peopleData[currentWeekIndex] || []).forEach(person => {
-        const row = `<tr><td>${person.name}</td><td>${person.read}</td><td>${person.total}</td></tr>`;
-        tbody.innerHTML += row;
+      let rows = "";
+      (baseData[currentWeekIndex] || []).forEach(person => {
+        rows += `<tr><td>${person.name}</td><td>${person.read}</td><td>${person.total}</td></tr>`;
       });
+      tbody.innerHTML = rows;
+
+      document.getElementById("prevBtn").disabled = currentWeekIndex === 0;
+      document.getElementById("nextBtn").disabled = currentWeekIndex === weeks.length - 1 || !baseData[currentWeekIndex + 1];
     }
 
     function changeWeek(dir) {
-      currentWeekIndex += dir;
-      if (currentWeekIndex < 0) currentWeekIndex = weeks.length - 1;
-      if (currentWeekIndex >= weeks.length) currentWeekIndex = 0;
+      const newIndex = currentWeekIndex + dir;
+      if (newIndex < 0 || newIndex >= weeks.length || !baseData[newIndex]) return;
+      currentWeekIndex = newIndex;
       renderWeek();
     }
 
