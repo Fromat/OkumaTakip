@@ -1,0 +1,111 @@
+﻿<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Takip Çizelgesi</title>
+  <style>
+    body {
+      margin: 0; font-family: Arial, sans-serif; background: #0b1020; color: #e6edf3;
+      display: flex; flex-direction: column; align-items: center; padding: 20px;
+    }
+    h1 { margin-bottom: 5px; }
+    .week-nav {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: #9aa4b2;
+    }
+    .nav-btn {
+      background: none; border: none; color: #e6edf3; font-size: 20px; cursor: pointer;
+    }
+    .nav-btn:hover { color: #4f8cff; }
+    table {
+      border-collapse: collapse; width: 100%; max-width: 700px; background: #111936; border-radius: 10px; overflow: hidden;
+    }
+    th, td {
+      padding: 10px; border: 1px solid rgba(255,255,255,0.1); text-align: center;
+    }
+    th { background: #1b2545; }
+    .logout {
+      margin-top: 20px; padding: 10px 20px; background: #4f8cff; color: #fff; border: none; border-radius: 6px; cursor: pointer;
+    }
+    .logout:hover { background: #3a6edc; }
+  </style>
+</head>
+<body>
+  <h1 id="welcome"></h1>
+  <div class="week-nav">
+    <button class="nav-btn" onclick="changeWeek(-1)">⟨</button>
+    <div id="weekLabel"></div>
+    <button class="nav-btn" onclick="changeWeek(1)">⟩</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ad Soyad</th>
+        <th>Okunan Sayfa Sayısı</th>
+        <th>Toplam Sayfa Sayısı</th>
+      </tr>
+    </thead>
+    <tbody id="dataBody">
+    </tbody>
+  </table>
+  <button class="logout" onclick="logout()">Çıkış Yap</button>
+
+  <script>
+    const STORAGE_KEY = "selectedName";
+    const name = localStorage.getItem(STORAGE_KEY);
+    if (!name) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById("welcome").textContent = `Hoş geldin, ${name}`;
+    }
+
+    const weeks = [
+      { start: "18 Ağu", end: "24 Ağu" },
+      { start: "25 Ağu", end: "31 Ağu" },
+      { start: "1 Eyl", end: "7 Eyl" }
+    ];
+    let currentWeekIndex = 0;
+
+    const peopleData = {
+      0: [
+        { name: "Ahmet", read: 25, total: 100 },
+        { name: "Ayşe", read: 30, total: 120 }
+      ],
+      1: [
+        { name: "Ahmet", read: 28, total: 128 },
+        { name: "Ayşe", read: 26, total: 146 }
+      ],
+      2: [
+        { name: "Ahmet", read: 22, total: 150 },
+        { name: "Ayşe", read: 32, total: 178 }
+      ]
+    };
+
+    function renderWeek() {
+      const week = weeks[currentWeekIndex];
+      document.getElementById("weekLabel").textContent = `${week.start} - ${week.end} Haftası`;
+
+      const tbody = document.getElementById("dataBody");
+      tbody.innerHTML = "";
+      (peopleData[currentWeekIndex] || []).forEach(person => {
+        const row = `<tr><td>${person.name}</td><td>${person.read}</td><td>${person.total}</td></tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    function changeWeek(dir) {
+      currentWeekIndex += dir;
+      if (currentWeekIndex < 0) currentWeekIndex = weeks.length - 1;
+      if (currentWeekIndex >= weeks.length) currentWeekIndex = 0;
+      renderWeek();
+    }
+
+    renderWeek();
+
+    function logout() {
+      localStorage.removeItem(STORAGE_KEY);
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
